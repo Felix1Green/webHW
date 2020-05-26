@@ -1,0 +1,17 @@
+<div class="container mt-2">
+    <nav aria-label="Page navigation example footer">
+        <ul class="pagination">
+            {% if cur_list.number != 1 %}
+                <li class="page-item"><a class="page-link" href="?page={{ cur_list.previous_page_number }}">{{ cur_list.previous_page_number }}</a></li>
+            {% endif %}
+            <li class="page-item active"><a class="page-link" href="?page={{ cur_list.number }}">{{ cur_list.number }}</a></li>
+            {% if max_page_number > cur_list.number %}
+                <li class="page-item"><a class="page-link" href="?page={{ cur_list.next_page_number }}">{{ cur_list.next_page_number }}</a></li>
+                {% if max_page_number > cur_list.next_page_number %}
+                    <li class="page-item"><p class="page-link">...</p></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ max_page_number }}">{{ max_page_number }}</a></li>
+                {% endif %}
+            {% endif %}
+        </ul>
+    </nav>
+</div>

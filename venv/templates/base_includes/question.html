@@ -1,0 +1,22 @@
+{% load static %}
+
+<div class="blog-post border-bottom pb-3 pt-2">
+        <div class="row">
+                <span class ='pl-3'><img class="avatar_img" src="{{ question.Author.avatar }}"></span>
+                <h2><a href="{{ question.get_absolute_url }}"class="blog-post-title pl-3">{{question.title}}</a></h2>
+        </div>
+        <div>
+                <p>{{question.text|slice:":30"}}...</p>
+        </div>
+        <div class = 'row'>
+                <p id="countlikes{{ question.id }}">{{ question.count_likes }}</p>
+                <a data-id="{{ question.id }}" class = "likebutton pl-3" ><img class = "like_avatar" src="{% static "img/like.png"%}"></a>
+                <p id="countdislikes{{ question.id }}">{{ question.count_dislikes }}</p>
+                <a data-id="{{ question.id }}" class = "dislikebutton pl-3"><img class = "dislike_avatar" src="{% static "img/dislike.png"%}"></a>
+                <a href = "#" class = "pl-3">answers({{question.total_answers}})</a>
+                <span class = "pl-2">Tags: </span>
+                  {% for i in question.all_tags %}
+                        <a href = "{{ i.get_absolute_url }}"><span class = "pl-2">{{i.title}}</span></a>
+                {% endfor %}
+        </div>
+</div>

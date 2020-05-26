@@ -1,0 +1,17 @@
+<aside class="col-md-4 blog-sidebar float-right">
+                  <div class="p-4 mb-3 bg-light rounded">
+                    <h4>Popular Tags</h4>
+                    {% for i in tags %}
+                      <p><a href = "{{ i.get_absolute_url }}">{{i}} </a></p>
+                    {% endfor %}
+                  </div>
+
+                  <div class="p-4">
+                    <h4>Best Members</h4>
+                    <ol class="list-unstyled mb-0">
+                        {%for user in Best_Users %}
+                        <li><a href="#">{{user.name}}</a></li>
+                        {% endfor %}
+                    </ol>
+                  </div>
+</aside>

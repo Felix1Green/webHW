@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <meta charset="UTF-python8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no"></head>
+    <link href = "{% static 'css/style.css'%}" rel = "stylesheet" type = "text/css">
+    <link href = "{% static 'bootstrap/css/bootstrap.css' %}" rel = "stylesheet" type = "text/css">
+    <title>{% block title %}{% endblock %}</title>
+<body class = wrapper>
+    {% include "base_includes/navbar.html" %}
+    {% block page %}
+      <main role="main" class="container mt-3 pb-3">
+        <div class ="row pb-5">
+            <div class="col-md-8 blog-main">
+                {%block question_title %}
+                  <h3 class="pb-4 mb-4 border-bottom">
+                      Questions
+                  </h3>
+                {% endblock %}
+                {% block content %}{%endblock%}
+                </div>
+                {% include "base_includes/sidebar.html" %}
+        </div>
+      </main>
+    {%endblock %}
+    {% include 'base_includes/footer.html' %}
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript">
+        $('.likebutton').click(function(){
+            var id;
+            id = $(this).attr("data-id");
+            $.ajax({
+                url:"like/"+id+"/" + "1/",
+                type:"GET",
+                success:function(data){
+                    $('#countdislikes' + id).text(data['Dislike']);
+                    $('#countlikes' + id).text(data['Like']);
+                    console.log('#countlikes' + id);
+                    console.log(data);
+                }
+            })
+        })
+        $('.dislikebutton').click(function(){
+            var id;
+            id = $(this).attr("data-id");
+            $.ajax({
+                url:"like/"+id+"/" + "0/",
+                type:"GET",
+                success:function(data){
+                    $('#countdislikes' + id).text(data['Dislike']);
+                    $('#countlikes' + id).text(data['Like']);
+                    console.log(data);
+                }
+            })
+        })
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" ></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+</body>
+</html>

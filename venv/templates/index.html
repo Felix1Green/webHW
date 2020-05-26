@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{%block question_title %}
+<h3 class="pb-4 mb-4 border-bottom">{{title}} Questions</h3>
+{% endblock %}
+
+
+{% block content %}
+                  {% for question in questions%}
+                    {% include "base_includes/question.html" %}
+                  {% endfor %}
+                    {% if cur_list != max_page_number %}
+                    {%include 'base_includes/page_pagination.html' %}
+                    {% endif %}
+{% endblock content %}

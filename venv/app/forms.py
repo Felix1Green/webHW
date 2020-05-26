@@ -1,0 +1,114 @@
+from django import forms
+from django.core.files.storage import FileSystemStorage
+from app import models
+from django.contrib.auth.models import User
+
+
+def save_avatar(request):
+    avatar = request['avatar']
+    fs = FileSystemStorage()
+    filename = fs.save(avatar.name,avatar)
+    image_url = fs.url(filename)
+    return image_url
+
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField(max_length=30)
+    password = forms.CharField(widget=forms.PasswordInput)
+
+    def clean(self):
+        if len(self.cleaned_data['password']) < 8 or len(self.cleaned_data['username']) > 15:
+            raise forms.ValidationError("The login or password is incorrect")
+        return
+
+
+class SignupForm(forms.Form):
+    username = forms.CharField(max_length=15)
+    nickname = forms.CharField(max_length=15)
+    email = forms.EmailField()
+    password = forms.CharField(widget=forms.PasswordInput)
+    Repeat_Password = forms.CharField(widget=forms.PasswordInput)
+    avatar = forms.ImageField(required=False)
+
+    def clean(self):
+        if len(self.cleaned_data['password']) < 8:
+            raise forms.ValidationError("The password is incorrect")
+        if self.cleaned_data['Repeat_Password'] != self.cleaned_data['password']:
+            raise forms.ValidationError("Repeated password doesnt match")
+        return
+
+    def save(self):
+        nickname = self.cleaned_data['username']
+        password = self.cleaned_data['password']
+        email = self.cleaned_data['email']
+        user = User.objects.create(username=nickname, email=email)
+        user.set_password(password)
+        user.save()
+        profile = models.Profile.objects.create(user=user, nickname=nickname)
+        if self.cleaned_data['avatar'] is not None:
+            avatar_url = save_avatar(self.cleaned_data)
+            profile.avatar = avatar_url
+        profile.save()
+        print(user)
+        return user
+
+
+class QuestionForm(forms.Form):
+    title = forms.CharField(max_length=15)
+    Text = forms.CharField(widget=forms.Textarea)
+    Tags = forms.CharField(max_length=50)
+
+    def clean(self):
+        tags = self.cleaned_data.get('Tags')
+        if len(tags) < 1:
+            raise forms.ValidationError("No tags")
+
+    def save(self,user):
+        tags = self.cleaned_data['Tags'].split(', ')
+        q = models.Question.objects.create(Author=user, title=self.cleaned_data['title'],
+                                           text=self.cleaned_data['Text'])
+        for i in tags:
+            tag = models.Tag.objects.get_or_create(title=i)[0]
+            tag.Questions.add(q)
+            tag.save()
+        return q
+
+
+class User_Settings(forms.Form):
+    nickname = forms.CharField(max_length=15, required=False)
+    email = forms.EmailField(required=False)
+    avatar = forms.ImageField(required=False)
+
+    def clean(self):
+        image = self.cleaned_data.get('avatar', False)
+        if image and len(image) > 4 * 1024 * 1024:
+            raise forms.ValidationError("Image file too large ( > 4mb )")
+        return
+
+    def save(self,instance):
+        print(self.cleaned_data)
+        if len(self.cleaned_data['nickname']) > 0:
+            instance.profile.nickname = self.cleaned_data['nickname']
+        if len(self.cleaned_data['email']) > 0:
+            instance.email = self.cleaned_data['email']
+        if self.cleaned_data['avatar']:
+            image_url = save_avatar(self.cleaned_data)
+            instance.profile.avatar = image_url
+        instance.profile.save()
+        instance.save()
+        return instance
+
+
+class AnswerForm(forms.Form):
+    text = forms.CharField(widget=forms.Textarea)
+
+    def clean(self):
+        if len(self.cleaned_data['text']) <1:
+            raise forms.ValidationError("No answer to send")
+        return
+
+    def save(self,question_object,user):
+        answer = models.Answer.objects.create(text=self.cleaned_data['text'], Question=question_object, Author=user)
+        answer.save()
+        return answer.id

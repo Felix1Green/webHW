@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block question_title %}
+    <h3 class="pb-4 mb-4 border-bottom">Question</h3>
+{% endblock question_title %}
+
+{% block content %}
+    <div class="col-md-8 blog-main">
+        <div class="border-bottom pb-3 pt-2">
+            <div class="row">
+                <span class='pl-2'><img class="big_avatar_img" src="{{ question.Author.avatar }}"></span>
+                <h2 class="blog-post-title pl-3 pt-2">{{ question.title }}</h2>
+            </div>
+            <div class="pt-3">
+                <p>{{ question.text }}<p>
+            </div>
+            <div class='row pt-3'>
+                <a href="#" class="pl-3"><img class="like_avatar" src="{% static "img/like.png" %}"></a>
+                <span class="pl-2">Tags: </span>
+                {% for i in question_tags %}
+                    <a href="#"><span class="pl-2">{{ i }}</span></a>
+                {% endfor %}
+            </div>
+        </div>
+    {% if user.is_authenticated %}
+        <form class="form-horizontal" method="post" action=".">
+            {% csrf_token %}
+            <fieldset>
+                {% for field in form %}
+                    <div class="control-group
+                {% if field.errors %}has-error{% endif %}">
+                        <label class="control-label mt-2">{{ field.label }}</label>
+                        <div class="controls">{{ field }}</div>
+                    </div>
+                {% endfor %}
+            </fieldset>
+            <div class="form-actions mt-3">
+                <button type="submit" class="btn btn-success">Answer!</button>
+            </div>
+        </form>
+    {% endif %}
+        {% for i in answers %}
+            <div id="{{ i.id }}" class=" pb-3 pt-2 ans_area mt-5 pl-3 pt-2">
+                <div class="row">
+                    <span class="pl-3"><img class="avatar_img" src="{{ i.Author.avatar }}"></span>
+                    <h4 id = "correctAns{{ i.id }}" class="pl-3 pt-1 {% if i.is_correct == True %}text-success{% endif %}">{{ i.text }}</h4>
+                </div>
+                <div class='row pt-3'>
+                    {% if user.profile == question.Author and not i.is_correct %}
+                        <a class="pl-3 correct_ans like" data-id = {{ i.id }}><img class="like_avatar" src="{% static "img/correct.jpg" %}"></a>
+                    {% endif %}
+                    <a href="#" class="pl-3"><img class="like_avatar" src="{% static "img/like.png" %}"></a>
+                </div>
+            </div>
+        {% endfor %}
+        {% include 'base_includes/page_pagination.html' %}
+    </div>
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script>
+        $('.correct_ans').click(function(){
+            var id;
+            id = $(this).attr("data-id");
+            $.ajax({
+                url:"/correct_ans/"+id+"/",
+                type:"GET",
+                success:function(data){
+                    $('#correctAns' + id).attr({
+                        "class": "pl-3 pt-1 text-success"
+                    });
+                    $('.correct_ans').hide();
+                    console.log(data);
+                }
+            })
+        })
+        $( document ).ready(function()
+        {
+            console.log("ready!");
+            $('html, body').animate({
+                scrollTop: $("#{{ id }}").offset().top
+             }, 1500);
+        });
+    </script>
+{% endblock content %}

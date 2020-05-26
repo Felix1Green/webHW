@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+
+{%block question_title %}
+<h3 class="pb-4 mb-4 border-bottom">Settings</h3>
+{% endblock question_title %}
+
+
+{% block content %}
+    {% for e in form.non_field_errors %}
+        <div class="alert alert-danger">{{ e }}</div>
+    {% endfor %}
+    <form class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url 'user_settings' %}">
+        {% csrf_token %}
+        <fieldset>
+        {% for field in form %}
+            <div class="control-group
+            {% if field.errors %}has-error{% endif %}">
+                <label class="control-label mt-2">{{ field.label }}</label>
+                <div class="controls">{{ field }}</div>
+            </div>
+        {% endfor %}
+            </fieldset>
+    <div class="form-actions mt-3">
+        <button type="submit" class="btn btn-success">Submit!</button>
+    </div>
+    </form>
+{% endblock content %}

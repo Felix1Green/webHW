@@ -206,7 +206,6 @@ def User_settings(request):
 
 @login_required(redirect_field_name="continue")
 def Logout(request):
-    user = request.user
     logout(request)
     return HttpResponseRedirect("/")
 

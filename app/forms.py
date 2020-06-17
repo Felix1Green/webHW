@@ -46,7 +46,7 @@ class SignupForm(forms.Form):
         user.set_password(password)
         user.save()
         profile = models.Profile.objects.create(user=user, nickname=nickname)
-        if self.cleaned_data['avatar'] is not None:
+        if self.cleaned_data['avatar']:
             avatar_url = save_avatar(self.cleaned_data)
             profile.avatar = avatar_url
         profile.save()
@@ -65,7 +65,11 @@ class QuestionForm(forms.Form):
             raise forms.ValidationError("No tags")
 
     def save(self,user):
-        tags = self.cleaned_data['Tags'].split(', ')
+        tags = list()
+        try:
+            tags = self.cleaned_data['Tags'].split(', ')
+        except Exception as e:
+            tags = ["test"]
         q = models.Question.objects.create(Author=user, title=self.cleaned_data['title'],
                                            text=self.cleaned_data['Text'])
         for i in tags:

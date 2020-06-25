@@ -36,7 +36,7 @@ class LikeDislikeManager(models.Manager):
         return self.get_queryset().filter(vote__lt=0)
 
     def avgNumber(self):
-        return self.get_queryset().aggregate(Sum("vote__sum")).get('vote__sum') or 0
+        return self.get_queryset().aggregate(Sum("vote")).get('vote__sum') or 0
 
 
 class TagsManager(models.Manager):
@@ -74,10 +74,14 @@ class LikeDislike(models.Model):
     objects = LikeDislikeManager()
 
 class Question(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(fields=['title'])
+        ]
     Author = models.ForeignKey(Profile, on_delete=models.CASCADE)
     votes = GenericRelation(LikeDislike,related_query_name="Questions")
     title = models.CharField(max_length=30)
-    text = models.TextField()
+    text = models.TextField(max_length=200)
     added_at = models.DateTimeField(auto_now_add=True)
     objects = QuetionManager()
 

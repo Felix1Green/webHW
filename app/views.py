@@ -3,9 +3,9 @@ from app import forms
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.core.files.storage import FileSystemStorage
-from django.http import HttpResponse, HttpRequest,HttpResponseRedirect
+from django.http import HttpResponse, HttpRequest, HttpResponseRedirect
 from django.http.response import HttpResponse
-from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
@@ -18,7 +18,7 @@ from app import models
 # return p
 
 
-def paginate(object_list, request, per_page=10,ans_id=None):
+def paginate(object_list, request, per_page=10, ans_id=None):
     p = Paginator(object_list, per_page)
     page = request.GET.get("page") or 1
     response = list()
@@ -32,7 +32,7 @@ def paginate(object_list, request, per_page=10,ans_id=None):
 
 def new_filter(request):
     questions = models.Question.objects.new()
-    question_list, current_page, num_pages = paginate(questions,request)
+    question_list, current_page, num_pages = paginate(questions, request)
     tags = models.Tag.objects.popular()
     best_users = models.Profile.objects.best()
     print(request.user)
@@ -66,7 +66,7 @@ def popular_filter(request):
 def tag_filter(request, slug):
     tag = get_object_or_404(models.Tag, title=slug)
     questions = tag.Questions.all()
-    question_list,current_page,num_pages = paginate(questions, request)
+    question_list, current_page, num_pages = paginate(questions, request)
     tags = models.Tag.objects.popular()
     best_users = models.Profile.objects.best()
     return render(request, "tag_index.html", {
@@ -84,15 +84,18 @@ def question(request, pk):
     question_object = get_object_or_404(models.Question, id=pk)
     ans_id = None
     if request.method == "POST" and request.user.is_authenticated:
-        form = forms.AnswerForm(request.POST)
+        form = forms.AnswerForm(request.POST, user=request.user.profile, question=question_object)
+        print("ye")
         if form.is_valid():
-            ans_id = form.save(question_object, request.user.profile)
+            print("HI")
+            ans_id = form.save().pk
     answers = models.Answer.objects.filter(Question=question_object)
     question_tags = models.Tag.objects.filter(Questions__id=question_object.id)[:10]
+    print(question_object.votes.avgNumber())
     tags = models.Tag.objects.popular()
     best_users = models.Profile.objects.best()
-    answers_list, current_page, num_pages = paginate(answers, request,ans_id=ans_id)
-    print(current_page," asdasdasd")
+    answers_list, current_page, num_pages = paginate(answers, request, ans_id=ans_id)
+    print(current_page, " asdasdasd")
     form = forms.AnswerForm()
     return render(request, "question.html", {
         'user': request.user,
@@ -103,21 +106,22 @@ def question(request, pk):
         "cur_list": current_page,
         "max_page_number": num_pages,
         "question_tags": question_tags,
-        "form":form,
-        "id":ans_id 
+        "form": form,
+        "id": ans_id
     })
 
 
 def Login(request):
     redirect_url = request.GET.get("continue")
-    print(redirect_url)
     if request.user.is_authenticated:
         return HttpResponseRedirect("/")
     if request.method == 'POST':
         form = forms.LoginForm(request.POST)
         if form.is_valid():
+            print("Hi")
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
+            print(username, password)
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
@@ -137,15 +141,14 @@ def Auth(request):
     if request.user.is_authenticated:
         return HttpResponseRedirect("/")
     if request.method == 'POST':
-        form = forms.SignupForm(request.POST,request.FILES)
-        print("error1")
+        form = forms.SignupForm(request.POST, request.FILES)
         if form.is_valid():
-            print("error")
+            print("hi")
             user = form.save()
             if user:
                 login(request, user)
                 return HttpResponseRedirect("/")
-        form.add_error(None, 'Username already exists')
+        form.add_error(None, 'User already exists')
     else:
         form = forms.SignupForm()
     return render(request, "auth.html", {
@@ -154,36 +157,36 @@ def Auth(request):
 
 
 @login_required(redirect_field_name="continue")
-def like_setter(request,pk,type):
+def like_setter(request, pk, type):
     if request.method == "POST":
         return HttpResponse.status_code(405)
     user = request.user
-    Question = get_object_or_404(models.Question,id=pk)
+    Question = get_object_or_404(models.Question, id=pk)
     if Question.votes.filter(user=user.profile).exists():
-        if Question.votes.filter(vote=type,user=user.profile).exists():
+        if Question.votes.filter(vote=type, user=user.profile).exists():
             return HttpResponse.status_code(400)
-        vote = models.LikeDislike.objects.get(user=user.profile,object_id = Question.id)
+        vote = models.LikeDislike.objects.get(user=user.profile, object_id=Question.id)
         vote.vote = type
         vote.save()
-        return JsonResponse({"Like":len(Question.votes.filter(vote=1)),
+        return JsonResponse({"Like": len(Question.votes.filter(vote=1)),
                              "Dislike": len(Question.votes.filter(vote=0))})
-    Like = models.LikeDislike.objects.create(vote = type,user=user.profile,contentObject =Question)
+    Like = models.LikeDislike.objects.create(vote=type, user=user.profile, contentObject=Question)
     Like.save()
     print("ok")
-    return JsonResponse({"Like":len(Question.votes.filter(vote=1)),
-                             "Dislike": len(Question.votes.filter(vote=0))})
+    return JsonResponse({"Like": len(Question.votes.filter(vote=1)),
+                         "Dislike": len(Question.votes.filter(vote=0))})
 
 
 @login_required(redirect_field_name="continue")
-def correct_answer_setter(request,pk):
+def correct_answer_setter(request, pk):
     if request.method == "POST":
         return HttpResponse.status_code(405)
     user = request.user.profile
-    Answer = models.Answer.objects.get(id = pk)
+    Answer = models.Answer.objects.get(id=pk)
     if Answer.Question.Author == user:
         Answer.is_correct = True
         Answer.save()
-        return JsonResponse({"Ok":"True"})
+        return JsonResponse({"Ok": "True"})
     return HttpResponse.status_code(403)
 
 
@@ -191,11 +194,12 @@ def correct_answer_setter(request,pk):
 def User_settings(request):
     form = forms.User_Settings()
     if request.method == "POST":
-        form = forms.User_Settings(request.POST, request.FILES)
+        form = forms.User_Settings(request.POST, request.FILES, user=request.user)
         if form.is_valid():
-            form.save(request.user)
+            form.save()
+            return HttpResponseRedirect(reverse("main_page"))
     tags = models.Tag.objects.popular()
-    best_users = models.Profile.objects.best()
+    best_users = list(models.Profile.objects.best())
     return render(request, "user_settings.html", {
         'user': request.user,
         'tags': tags,
@@ -213,17 +217,21 @@ def Logout(request):
 @login_required(redirect_field_name="continue")
 def Question_form(request):
     if request.method == "POST":
-        form = forms.QuestionForm(request.POST)
+        form = forms.QuestionForm(request.POST, author=request.user.profile)
         if form.is_valid():
-            user = request.user.profile
-            q = form.save(user)
-            return HttpResponseRedirect(reverse('question',kwargs={"pk":q.id}))
+            q = form.save()
+            return HttpResponseRedirect(reverse('question', kwargs={"pk": q.pk}))
     form = forms.QuestionForm()
     tags = models.Tag.objects.popular()
     best_users = models.Profile.objects.best()
     return render(request, "question_form.html", {
-        'form': form,
         'user': request.user,
         'tags': tags,
         'Best_Users': best_users,
+        'form': form
     })
+
+
+def wsgi_func(request):
+    request_headers = [(i,value) for i,value in request.GET.items()]
+    return HttpResponse(status=200,content=request_headers)

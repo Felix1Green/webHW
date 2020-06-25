@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load bootstrap4 %}
 {% load static %}
 
 {%block question_title %}
@@ -10,19 +11,16 @@
     {% for e in form.non_field_errors %}
         <div class="alert alert-danger">{{ e }}</div>
     {% endfor %}
-    <form class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url 'user_settings' %}">
-        {% csrf_token %}
-        <fieldset>
-        {% for field in form %}
-            <div class="control-group
-            {% if field.errors %}has-error{% endif %}">
-                <label class="control-label mt-2">{{ field.label }}</label>
-                <div class="controls">{{ field }}</div>
-            </div>
-        {% endfor %}
-            </fieldset>
-    <div class="form-actions mt-3">
-        <button type="submit" class="btn btn-success">Submit!</button>
-    </div>
-    </form>
+    <form method="POST" enctype="multipart/form-data" action="{% url 'user_settings' %}" novalidate>
+            {% csrf_token %}
+
+            {% bootstrap_form form layout="horizontal" label_class="form-label col-sm-3" field_class="form-field col-sm-7" %}
+
+            {% buttons %}
+                <button type="submit" class="btn btn-primary ml-3">
+                    <span class="spinner-border spinner-border-sm p-0 m-0" style="display: none;" role="status" aria-hidden="true"></span>
+                    Change
+                </button>
+            {% endbuttons %}
+        </form>
 {% endblock content %}
